@@ -394,5 +394,10 @@
       <version>2.4</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.wikidata.wdtk</groupId>
+      <artifactId>wdtk-dumpfiles</artifactId>
+      <version>0.2.0</version>
+    </dependency>
   </dependencies>
 </project>
