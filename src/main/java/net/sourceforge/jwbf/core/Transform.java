@@ -6,11 +6,15 @@ import com.google.common.collect.Iterables;
 
 public class Transform {
 
-  public static <F,T> ImmutableList<T> a(Iterable<F> from, Function<F, T> function) {
+  private Transform() {
+    // do nothing
+  }
+
+  public static <F, T> ImmutableList<T> a(Iterable<F> from, Function<F, T> function) {
     return ImmutableList.copyOf(Iterables.transform(from, function));
   }
 
-  public static <F,T> ImmutableList<T> the(Iterable<F> from, Function<F, T> function) {
+  public static <F, T> ImmutableList<T> the(Iterable<F> from, Function<F, T> function) {
     return Transform.a(from, function);
   }
 }

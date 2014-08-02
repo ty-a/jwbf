@@ -350,7 +350,7 @@ public class MediaWikiBot implements WikiBot {
   }
 
   // FIXME remove this
-  private static Function<String, SimpleArticle> TO_FAKE_ARTICLES = new Function<String, SimpleArticle>() {
+  static Function<String, SimpleArticle> TO_FAKE_ARTICLES = new Function<String, SimpleArticle>() {
     @Nullable
     @Override
     public SimpleArticle apply(@Nullable String s) {
