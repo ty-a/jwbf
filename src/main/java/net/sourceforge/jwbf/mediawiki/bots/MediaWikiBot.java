@@ -1,11 +1,15 @@
 package net.sourceforge.jwbf.mediawiki.bots;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.net.URL;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import net.sourceforge.jwbf.core.Transform;
 import net.sourceforge.jwbf.core.actions.ContentProcessable;
 import net.sourceforge.jwbf.core.actions.HttpActionClient;
 import net.sourceforge.jwbf.core.actions.util.ActionException;
@@ -60,7 +64,6 @@ public class MediaWikiBot implements WikiBot {
 
   private boolean loginChangeUserInfo = false;
   private boolean loginChangeVersion = false;
-  private boolean useEditApi = true;
 
   @Inject
   private HttpBot bot;
@@ -158,11 +161,11 @@ public class MediaWikiBot implements WikiBot {
    * @see GetRevision
    */
   public synchronized Article getArticle(final String name, final int properties) {
-    return new Article(this, readData(name, properties));
+    return new Article(this, readData(properties, name));
   }
 
   /**
-   * {@inheritDoc}
+   * @deprecated use {@link #readData(int, String)}
    */
   @Override
   public synchronized SimpleArticle readData(final String name, final int properties) {
@@ -173,8 +176,37 @@ public class MediaWikiBot implements WikiBot {
    * {@inheritDoc}
    */
   @Override
+  public synchronized SimpleArticle readData(final int properties, final String name) {
+    return getPerformedAction(new GetRevision(getVersion(), name, properties)).getArticle();
+  }
+
+  @Override
+  public ImmutableList<SimpleArticle> readData(int properties, String... names) {
+    return readData(properties, ImmutableList.copyOf(names));
+  }
+
+  @Override
+  public ImmutableList<SimpleArticle> readData(String... names) {
+    return readData(ImmutableList.copyOf(names));
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public SimpleArticle readData(String name) {
-    return readData(name, DEFAULT_READ_PROPERTIES);
+    return readData(DEFAULT_READ_PROPERTIES, name);
+  }
+
+  @Override
+  public ImmutableList<SimpleArticle> readData(int properties, ImmutableList<String> names) {
+    // FIXME
+    return Transform.the(names, TO_FAKE_ARTICLES);
+  }
+
+  @Override
+  public ImmutableList<SimpleArticle> readData(ImmutableList<String> names) {
+    return readData(DEFAULT_READ_PROPERTIES, names);
   }
 
   /**
@@ -316,5 +348,16 @@ public class MediaWikiBot implements WikiBot {
   public final String getWikiType() {
     return MediaWiki.class.getSimpleName() + " " + getVersion();
   }
+
+  // FIXME remove this
+  private static Function<String, SimpleArticle> TO_FAKE_ARTICLES = new Function<String, SimpleArticle>() {
+    @Nullable
+    @Override
+    public SimpleArticle apply(@Nullable String s) {
+      SimpleArticle simpleArticle = new SimpleArticle();
+      simpleArticle.setTitle(s);
+      return simpleArticle;
+    }
+  };
 
 }

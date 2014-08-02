@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @param <T> of
  * @author Thomas Stock
  */
-abstract class TitleQuery<T> implements Iterable<T>, Iterator<T>, Cloneable {
+public abstract class TitleQuery<T> implements Iterable<T>, Iterator<T>, Cloneable {
 
   private static final Logger log = LoggerFactory.getLogger(TitleQuery.class);
 

@@ -11,6 +11,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import javax.annotation.Nullable;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
+import net.sourceforge.jwbf.GAssert;
+import net.sourceforge.jwbf.core.Transform;
 import net.sourceforge.jwbf.core.actions.HttpActionClient;
 import net.sourceforge.jwbf.core.actions.util.ActionException;
 import net.sourceforge.jwbf.core.contentRep.SimpleArticle;
@@ -19,6 +25,7 @@ import net.sourceforge.jwbf.mediawiki.actions.editing.PostModifyContent;
 import net.sourceforge.jwbf.mediawiki.actions.login.PostLogin;
 import net.sourceforge.jwbf.mediawiki.actions.meta.GetVersion;
 import net.sourceforge.jwbf.mediawiki.actions.meta.Siteinfo;
+import net.sourceforge.jwbf.mediawiki.actions.queries.TitleQuery;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -34,6 +41,7 @@ public class MediaWikiBotTest {
   @Before
   public void before() {
     client = mock(HttpActionClient.class);
+    testee = new MediaWikiBot(client);
   }
 
   @Test
@@ -81,7 +89,6 @@ public class MediaWikiBotTest {
   @Test
   public void testWriteContent_not_logged_in() {
     // GIVEN
-    testee = new MediaWikiBot(client);
 
     try {
       // WHEN
@@ -179,7 +186,6 @@ public class MediaWikiBotTest {
   @Test
   public void testIsNotLoggedIn() {
     // GIVEN
-    testee = new MediaWikiBot(client);
 
     // WHEN / THEN
     assertFalse(testee.isLoggedIn());
@@ -207,7 +213,6 @@ public class MediaWikiBotTest {
   @Test
   public void testGetSiteInfo() {
     // GIVEN
-    testee = new MediaWikiBot(client);
 
     // WHEN
     Siteinfo siteinfo = testee.getSiteinfo();
@@ -219,10 +224,49 @@ public class MediaWikiBotTest {
   @Test
   public void testGetWikiType() {
     // GIVEN
-    testee = new MediaWikiBot(client);
 
     // WHEN / THEN
     assertEquals("MediaWiki UNKNOWN", testee.getWikiType());
+  }
+
+  @Test
+  public void testReadData_one() {
+    // GIVEN
+    String title = "Test";
+
+    // WHEN
+    SimpleArticle result = testee.readData(title);
+
+    // THEN
+    assertEquals(title, result.getTitle());
+  }
+
+  @Test
+  public void testReadData_two() {
+    // GIVEN
+    String[] titles = { "Test A", "Test B" };
+
+    // WHEN
+    ImmutableList<SimpleArticle> result = testee.readData(titles);
+
+    // THEN
+    ImmutableList<String> expected = ImmutableList.copyOf(titles);
+    GAssert.assertEquals(expected, Transform.a(result, TO_TITLES));
+  }
+
+  @Test
+  public void testReadData_three() {
+    // GIVEN
+    ImmutableList<String> titles = ImmutableList.of("Test A", "Test B", "Test C");
+    TitleQuery<String> query = mock(TitleQuery.class);
+    // simulates Categories, Backlinks, ...
+    when(query.getCopyOf(3)).thenReturn(titles);
+
+    // WHEN
+    ImmutableList<SimpleArticle> result = testee.readData(titles);
+
+    // THEN
+    GAssert.assertEquals(titles, Transform.a(result, TO_TITLES));
   }
 
   private void mockValidLogin(final String username, HttpActionClient mockClient) {
@@ -238,4 +282,13 @@ public class MediaWikiBotTest {
       }
     }).when(mockClient).performAction(isA(PostLogin.class));
   }
+
+  private static final Function<SimpleArticle, String> TO_TITLES =
+      new Function<SimpleArticle, String>() {
+        @Nullable
+        @Override
+        public String apply(@Nullable SimpleArticle simpleArticle) {
+          return simpleArticle.getTitle();
+        }
+      };
 }
